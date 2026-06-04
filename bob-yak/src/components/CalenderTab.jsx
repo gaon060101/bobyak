@@ -1,233 +1,210 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { CloudRain, Sun, Cloud, Edit2, Check, Wallet, ChevronLeft, ChevronRight } from 'lucide-react';
 
 export default function CalendarTab() {
   const [selectedDate, setSelectedDate] = useState(null);
-  
-  const [memos, setMemos] = useState({
-    2: "오랜만에 동기들 만나서 너무 재밌었다! 역시 곱창은 신촌황소 🍻",
-    8: "팀플 발표 준비 마무리. 논탄토 카이막 진짜 맛있음. 다음엔 샌드커피도 마셔봐야지.",
-    12: "여자친구랑 하이디라오! 마라탕 4단계는 역시 강렬했다... 스트레스 다 풀림 ㅋㅋㅋ",
-    15: "소프트웨어 스터디원들이랑 파이썬, C++ 얘기하다가 시간 다 감. 파티션 조용하고 좋음."
-  });
-  const [currentMemo, setCurrentMemo] = useState("");
-  const [isEditingMemo, setIsEditingMemo] = useState(false); 
-  
-  const [userCosts, setUserCosts] = useState({}); 
-  const [inputCost, setInputCost] = useState("");
-  const [editingCostEventId, setEditingCostEventId] = useState(null);
-  
-  const year = 2026;
-  const month = 5;
-  const today = 18;
+  const [memoText, setMemoText] = useState('');
+  const [isEditingMemo, setIsEditingMemo] = useState(false);
+  const [expenseInput, setExpenseInput] = useState('');
 
-  const events = [
-    { id: 1, date: 2, title: '신촌황소곱창', person: '동아리 동기들', type: '술집', emoji: '🍻', time: '오후 7:00', color: '#ab47bc', cost: 45000 },
-    { id: 2, date: 8, title: '샌드커피 논탄토', person: '팀플 조원', type: '카페', emoji: '☕', time: '오후 2:00', color: '#8d6e63', cost: 13000 },
-    { id: 3, date: 12, title: '하이디라오 신촌점', person: '여자친구', type: '식당', emoji: '🍲', time: '오후 6:30', color: '#ff5252', cost: 82000 },
-    { id: 4, date: 15, title: '파티션 WSC', person: '소프트웨어 스터디', type: '카페', emoji: '💻', time: '오후 4:00', color: '#8d6e63', cost: 6500 },
-    { id: 5, date: 18, title: '독수리다방', person: '세은', type: '카페', emoji: '☕', time: '오후 3:00', color: '#8d6e63' }, 
-    { id: 6, date: 21, title: '역전할머니맥주', person: '고등학교 친구들', type: '술집', emoji: '🍺', time: '오후 8:00', color: '#ab47bc' }, 
-    { id: 7, date: 24, title: '다성 일식', person: '경영학과 선배', type: '식당', emoji: '🍣', time: '오후 12:00', color: '#ff5252' }, 
-    { id: 8, date: 28, title: '신촌 LP바', person: '음악동아리', type: '술집', emoji: '🎵', time: '오후 9:00', color: '#ab47bc' }, 
-    { id: 9, date: 30, title: '쟁반집8292', person: '알바 회식', type: '식당', emoji: '🥩', time: '오후 6:30', color: '#ff5252' } 
-  ];
+  // 날짜 데이터 목업 (1주일)
+  const [weekData, setWeekData] = useState([
+    { id: 1, date: 24, day: '월', weather: 'sun', temp: '25° / 15°', isToday: false, state: 'past', expense: 15000, plan: '', memo: '스탠바이키친 너무 맛있었음!' },
+    { id: 2, date: 25, day: '화', weather: 'cloud', temp: '23° / 14°', isToday: false, state: 'past', expense: 8000, plan: '', memo: '' },
+    { id: 3, date: 26, day: '수', weather: 'rain', temp: '20° / 12°', isToday: true, state: 'today', expense: 0, plan: '독수리 다방 (오후 3시)', memo: '' },
+    { id: 4, date: 27, day: '목', weather: 'sun', temp: '26° / 16°', isToday: false, state: 'future', expense: 0, plan: '신촌 황소곱창 (저녁)', memo: '' },
+    { id: 5, date: 28, day: '금', weather: 'sun', temp: '28° / 18°', isToday: false, state: 'future', expense: 0, plan: '', memo: '' },
+    { id: 6, date: 29, day: '토', weather: 'cloud', temp: '24° / 15°', isToday: false, state: 'future', expense: 0, plan: '', memo: '' },
+    { id: 7, date: 30, day: '일', weather: 'sun', temp: '27° / 17°', isToday: false, state: 'future', expense: 0, plan: '', memo: '' }
+  ]);
 
-  const getWeather = (date) => {
-    const weathers = [
-      { icon: '☀️', text: '맑음', temp: '최고 25°C / 최저 15°C' },
-      { icon: '⛅', text: '구름 조금', temp: '최고 23°C / 최저 16°C' },
-      { icon: '🌧️', text: '봄비', temp: '최고 18°C / 최저 13°C' },
-      { icon: '☁️', text: '흐림', temp: '최고 20°C / 최저 14°C' }
-    ];
-    return weathers[date % 4];
+  // 마운트 시 오늘 날짜를 기본 선택
+  React.useEffect(() => {
+    const today = weekData.find(d => d.isToday);
+    if (today && !selectedDate) {
+      handleSelectDate(today);
+    }
+  }, []);
+
+  const getWeatherIcon = (type) => {
+    switch(type) {
+      case 'sun': return <Sun size={24} color="#ff9d00" />;
+      case 'cloud': return <Cloud size={24} color="#94a3b8" />;
+      case 'rain': return <CloudRain size={24} color="#00b4d8" />;
+      default: return <Sun size={24} />;
+    }
   };
 
-  const daysInMonth = 31;
-  const startDayOfWeek = 5; 
+  const handleSelectDate = (item) => {
+    setSelectedDate(item);
+    setMemoText(item.memo);
+    setIsEditingMemo(item.memo === '');
+    setExpenseInput(item.expense > 0 ? item.expense.toString() : '');
+  };
 
-  const totalCells = [];
-  for (let i = 0; i < startDayOfWeek; i++) totalCells.push(null);
-  for (let i = 1; i <= daysInMonth; i++) totalCells.push(i);
-  while (totalCells.length % 7 !== 0) totalCells.push(null);
+  const handleSaveExpense = () => {
+    if (!selectedDate) return;
+    const updated = weekData.map(d => 
+      d.id === selectedDate.id ? { ...d, expense: parseInt(expenseInput) || 0 } : d
+    );
+    setWeekData(updated);
+    setSelectedDate({ ...selectedDate, expense: parseInt(expenseInput) || 0 });
+  };
 
-  const weeks = [];
-  for (let i = 0; i < totalCells.length; i += 7) {
-    weeks.push(totalCells.slice(i, i + 7));
-  }
-
-  const handleSaveCost = (e, date, eventId) => {
-    e.stopPropagation();
-    const strCost = String(inputCost || "");
-    const numCost = parseInt(strCost.replace(/[^0-9]/g, ''), 10);
-    if (!isNaN(numCost)) {
-      setUserCosts(prev => ({
-        ...prev,
-        [date]: { ...(prev[date] || {}), [eventId]: numCost }
-      }));
-    }
-    setEditingCostEventId(null);
-    setInputCost("");
+  const handleSaveMemo = () => {
+    if (!selectedDate) return;
+    const updated = weekData.map(d => 
+      d.id === selectedDate.id ? { ...d, memo: memoText } : d
+    );
+    setWeekData(updated);
+    setSelectedDate({ ...selectedDate, memo: memoText });
+    setIsEditingMemo(false);
   };
 
   return (
-    <div style={{ padding: '10px', height: '100%', display: 'flex', flexDirection: 'column' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '20px' }}>
-        <h2 style={{ margin: 0 }}>밥약 캘린더</h2>
-        <span style={{ fontSize: '12px', color: '#666', background: '#f0f0f0', padding: '4px 10px', borderRadius: '15px' }}>오늘: {year}년 {month}월 {today}일</span>
-      </div>
-      
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: '20px', gap: '15px' }}>
-        <button className="circle-btn" style={{ width: '35px', height: '35px', background: 'white', color: '#666', fontSize: '16px' }}>&lt;</button>
-        <h3 style={{ margin: 0, fontSize: '20px', color: '#333' }}>{year}년 {month}월</h3>
-        <button className="circle-btn" style={{ width: '35px', height: '35px', background: 'white', color: '#666', fontSize: '16px' }}>&gt;</button>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', gap: '20px', flex: 1, minHeight: 0, width: '100%' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <h2 style={{ fontSize: '20px', color: 'var(--yonsei-blue)', margin: 0 }}>5월 4주차</h2>
+        <div style={{ display: 'flex', gap: '8px' }}>
+          <button className="circle-btn" style={{ width: '36px', height: '36px', background: 'white' }}><ChevronLeft size={18} /></button>
+          <button className="circle-btn" style={{ width: '36px', height: '36px', background: 'white' }}><ChevronRight size={18} /></button>
+        </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '8px', textAlign: 'center', paddingBottom: '10px' }}>
-        {['일', '월', '화', '수', '목', '금', '토'].map((day, idx) => (
-          <div key={day} style={{ fontWeight: 'bold', fontSize: '14px', color: idx === 0 ? '#ff5252' : idx === 6 ? '#007bff' : '#888' }}>{day}</div>
-        ))}
-      </div>
-      
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', paddingBottom: '40px' }}>
-        {weeks.map((week, wIdx) => {
-          const hasSelectedInWeek = week.includes(selectedDate) && selectedDate !== null;
+      <div style={{ display: 'flex', flex: 1, gap: '12px', overflow: 'hidden' }}>
+        {weekData.map(item => {
+          const isSelected = selectedDate?.id === item.id;
           return (
-            <div key={wIdx} style={{ display: 'flex', gap: '8px', width: '100%' }}>
-              {week.map((date, dIdx) => {
-                const isSelected = date === selectedDate && date !== null;
-                const isSquished = hasSelectedInWeek && !isSelected; 
-                const isToday = date === today;
-                const isPast = date < today && date !== null;
-                const dayEvents = date ? events.filter(e => e.date === date) : [];
-                const weather = date ? getWeather(date) : null;
-
-                const hasEnteredCost = userCosts[date] && Object.values(userCosts[date]).some(c => c > 0);
-                const showAsExpenseWidget = isPast || hasEnteredCost;
-
-                return (
-                  <div 
-                    key={dIdx} 
-                    onClick={() => {
-                      if (!isSelected && date) {
-                        setSelectedDate(date);
-                        const existingMemo = memos[date] || "";
-                        setCurrentMemo(existingMemo); 
-                        setIsEditingMemo(existingMemo === "");
-                        setEditingCostEventId(null); 
-                      }
-                    }}
-                    style={{ 
-                      flex: isSelected ? 1.6 : (isSquished ? 0.8 : 1),
-                      minWidth: 0, height: isSelected ? '340px' : (isSquished ? '100%' : '75px'),
-                      border: isSelected ? '2px solid #007bff' : (isToday ? '2px solid #ff9800' : (date ? '1px solid #f0f0f0' : 'none')), 
-                      borderRadius: isSelected ? '20px' : '15px', padding: isSelected ? '15px' : (isSquished ? '6px 4px' : '6px'), 
-                      display: 'flex', flexDirection: 'column', alignItems: isSelected ? 'flex-start' : 'center',
-                      background: isToday && !isSelected ? '#fff8e1' : (date ? 'white' : 'transparent'),
-                      boxShadow: isSelected ? '0 8px 25px rgba(0,123,255,0.15)' : (date ? '0 1px 5px rgba(0,0,0,0.02)' : 'none'),
-                      overflow: 'hidden', cursor: isSelected || !date ? 'default' : 'pointer', transition: 'all 0.3s cubic-bezier(0.25, 1, 0.5, 1)' 
-                    }}
-                  >
-                    {date && (
-                      <>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center', marginBottom: isSelected ? '12px' : '4px', flexShrink: 0 }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                            <span style={{ 
-                              fontSize: isSelected ? '16px' : (isSquished ? '11px' : '13px'), fontWeight: 'bold', color: isSelected ? 'white' : (isToday ? '#ff9800' : '#333'),
-                              background: isSelected ? '#007bff' : (dayEvents.length > 0 && !isSquished ? '#f0f4f8' : 'transparent'),
-                              width: isSelected ? '32px' : (isSquished ? '20px' : '22px'), height: isSelected ? '32px' : (isSquished ? '20px' : '22px'),
-                              display: 'flex', justifyContent: 'center', alignItems: 'center', borderRadius: '50%', transition: 'all 0.3s'
-                            }}>{date}</span>
-                            {isToday && !isSquished && (<span style={{ fontSize: '10px', fontWeight: 'bold', color: 'white', background: '#ff9800', padding: '2px 6px', borderRadius: '10px' }}>오늘</span>)}
-                          </div>
-                          {isSelected && ( <button onClick={(e) => { e.stopPropagation(); setSelectedDate(null); }} style={{ background: '#f0f0f0', borderRadius: '50%', border: 'none', width: '28px', height: '28px', cursor: 'pointer', color: '#666' }}>✕</button> )}
-                        </div>
-                        
-                        {!isSelected && (
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', width: '100%' }}>
-                            {dayEvents.map(event => (
-                              <div key={event.id} style={{ background: event.color + '15', color: event.color, fontSize: '11px', padding: '3px', borderRadius: '10px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontWeight: 'bold', textAlign: 'center' }}>{event.title}</div>
-                            ))}
-                          </div>
-                        )}
-
-                        {isSelected && (
-                          <div className="custom-scroll" style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '12px', animation: 'fadeIn 0.4s ease', overflowY: 'auto', flex: 1, paddingRight: '5px' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', background: '#f0f7ff', padding: '12px', borderRadius: '15px' }}>
-                              <span style={{ fontSize: '24px' }}>{weather.icon}</span>
-                              <div>
-                                <div style={{ fontSize: '13px', fontWeight: 'bold', color: '#0056b3' }}>{weather.text}</div>
-                                <div style={{ fontSize: '11px', color: '#666' }}>{weather.temp}</div>
-                              </div>
-                            </div>
-
-                            <div style={{ background: showAsExpenseWidget ? '#fff0f0' : '#f0f4c3', padding: '15px', borderRadius: '15px', transition: 'background 0.3s' }}>
-                              <div style={{ fontSize: '13px', fontWeight: 'bold', color: showAsExpenseWidget ? '#c62828' : '#827717', marginBottom: '8px' }}>{showAsExpenseWidget ? '💰 지출 내역' : '💵 예상 지출 플랜'}</div>
-                              {dayEvents.length > 0 ? (
-                                <>
-                                  {dayEvents.map(e => {
-                                    const displayCost = isPast ? (e.cost || 0) : (userCosts[date]?.[e.id] || 0);
-                                    const isEditing = editingCostEventId === e.id;
-                                    return (
-                                      <div key={`cost-${e.id}`} style={{ display: 'flex', flexDirection: 'column', marginBottom: '6px' }}>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#555', alignItems: 'center' }}>
-                                          <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', flex: 1 }}>{e.title}</span>
-                                          {isEditing ? (
-                                            <div style={{ display: 'flex', gap: '4px' }}>
-                                              <input type="text" value={inputCost} onChange={(evt) => setInputCost(evt.target.value)} placeholder="숫자만 입력" onClick={(evt) => evt.stopPropagation()} onKeyDown={(evt) => { if(evt.key === 'Enter') handleSaveCost(evt, date, e.id); }} style={{ width: '80px', padding: '4px', fontSize: '12px', border: `1px solid ${showAsExpenseWidget ? '#c62828' : '#827717'}`, borderRadius: '4px', outline: 'none' }} autoFocus />
-                                              <button onClick={(evt) => handleSaveCost(evt, date, e.id)} style={{ background: showAsExpenseWidget ? '#c62828' : '#827717', color: 'white', border: 'none', borderRadius: '4px', padding: '4px 8px', fontSize: '11px', cursor: 'pointer', fontWeight: 'bold' }}>저장</button>
-                                            </div>
-                                          ) : (
-                                            <div style={{ display: 'flex', gap: '5px', alignItems: 'center' }}>
-                                              <span style={{ fontWeight: displayCost > 0 ? 'bold' : 'normal', color: displayCost > 0 ? '#333' : '#999' }}>{displayCost > 0 ? displayCost.toLocaleString() + '원' : (isPast ? '무료/얻어먹음 😋' : '입력 안됨')}</span>
-                                              <button onClick={(evt) => { evt.stopPropagation(); setEditingCostEventId(e.id); setInputCost(displayCost ? String(displayCost) : ""); }} style={{ background: '#fff', border: `1px solid ${showAsExpenseWidget ? '#c62828' : '#827717'}`, color: showAsExpenseWidget ? '#c62828' : '#827717', borderRadius: '4px', padding: '2px 6px', fontSize: '10px', cursor: 'pointer', fontWeight: 'bold' }}>{displayCost > 0 ? '수정' : '입력'}</button>
-                                            </div>
-                                          )}
-                                        </div>
-                                      </div>
-                                    );
-                                  })}
-                                  <div style={{ borderTop: `1px dashed ${showAsExpenseWidget ? '#ffcdd2' : '#dce775'}`, marginTop: '8px', paddingTop: '8px', display: 'flex', justifyContent: 'space-between', fontWeight: 'bold', color: showAsExpenseWidget ? '#c62828' : '#827717', fontSize: '13px' }}>
-                                    <span>{showAsExpenseWidget ? '총 지출' : '예상 총합'}</span>
-                                    <span>{dayEvents.reduce((acc, cur) => acc + (isPast ? (cur.cost || 0) : (userCosts[date]?.[cur.id] || 0)), 0).toLocaleString()}원</span>
-                                  </div>
-                                </>
-                              ) : ( <div style={{ fontSize: '12px', color: '#999' }}>일정이 없습니다.</div> )}
-                            </div>
-
-                            {dayEvents.map(event => (
-                              <div key={event.id} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px', background: '#f8f9fa', borderRadius: '15px', border: '1px solid #f0f0f0' }}>
-                                <div className="circle-btn" style={{ width: '36px', height: '36px', background: 'white', fontSize: '18px', flexShrink: 0 }}>{event.emoji}</div>
-                                <div style={{ flex: 1, minWidth: 0 }}>
-                                  <div style={{ display: 'flex', gap: '6px', alignItems: 'center', marginBottom: '3px' }}>
-                                    <span style={{ fontSize: '13px', fontWeight: 'bold', color: '#333', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{event.title}</span>
-                                    <span style={{ background: '#e0f7fa', color: '#006064', padding: '2px 6px', borderRadius: '8px', fontSize: '10px', fontWeight: 'bold' }}>{event.time}</span>
-                                  </div>
-                                  <div style={{ color: '#666', fontSize: '11px' }}>함께하는 사람: <span style={{ fontWeight: 'bold', color: '#333' }}>{event.person}</span></div>
-                                </div>
-                              </div>
-                            ))}
-
-                            <div style={{ background: '#fcfcfc', border: '1px solid #e0e0e0', padding: '15px', borderRadius: '15px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <div style={{ fontSize: '13px', fontWeight: 'bold', color: '#333' }}>📝 밥약 메모장</div>
-                                {!isEditingMemo && memos[date] && ( <button onClick={(e) => { e.stopPropagation(); setIsEditingMemo(true); }} style={{ background: 'none', border: 'none', color: '#007bff', fontSize: '12px', cursor: 'pointer', fontWeight: 'bold' }}>수정</button> )}
-                              </div>
-                              {isEditingMemo ? (
-                                <>
-                                  <textarea value={currentMemo} onChange={(e) => setCurrentMemo(e.target.value)} placeholder="약속 메모 등록" onClick={(e) => e.stopPropagation()} style={{ width: '100%', boxSizing: 'border-box', padding: '10px', borderRadius: '10px', border: '1px solid #007bff', fontSize: '12px', resize: 'none', height: '70px', outline: 'none' }} autoFocus />
-                                  <button onClick={(e) => { e.stopPropagation(); setMemos(prev => ({ ...prev, [date]: currentMemo })); setIsEditingMemo(false); }} style={{ background: '#007bff', color: 'white', border: 'none', padding: '8px', borderRadius: '10px', fontSize: '12px', cursor: 'pointer', fontWeight: 'bold' }}>저장하기</button>
-                                </>
-                              ) : ( <div onClick={(e) => e.stopPropagation()} style={{ background: '#f0f7ff', padding: '12px', borderRadius: '10px', fontSize: '12.5px', color: '#333', lineHeight: '1.5' }}>{memos[date] || "저장된 메모가 없습니다."}</div> )}
-                            </div>
-                          </div>
-                        )}
-                      </>
-                    )}
+            <motion.div
+              key={item.id}
+              onClick={() => !isSelected && handleSelectDate(item)}
+              animate={{ flex: isSelected ? 3 : 1 }}
+              transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+              style={{ 
+                background: item.isToday ? 'rgba(0, 56, 118, 0.05)' : 'white',
+                border: item.isToday ? '2px solid var(--yonsei-blue)' : '1px solid #e2e8f0',
+                borderRadius: '24px',
+                padding: '20px',
+                cursor: isSelected ? 'default' : 'pointer',
+                overflow: 'hidden',
+                position: 'relative',
+                display: 'flex',
+                flexDirection: 'column',
+                boxShadow: isSelected ? '0 10px 30px rgba(0,0,0,0.05)' : 'none'
+              }}
+            >
+              {item.isToday && (
+                <div style={{ position: 'absolute', top: '16px', right: '16px', background: 'var(--yonsei-blue)', color: 'white', padding: '4px 10px', borderRadius: '12px', fontSize: '11px', fontWeight: 'bold' }}>
+                  오늘
+                </div>
+              )}
+              
+              <div style={{ textAlign: isSelected ? 'left' : 'center', marginBottom: isSelected ? '20px' : 'auto' }}>
+                <div style={{ fontSize: '16px', color: item.day === '일' ? 'var(--manner-red)' : (item.day === '토' ? 'var(--yonsei-light-blue)' : 'var(--text-muted)'), fontWeight: '600' }}>
+                  {item.day}
+                </div>
+                <div style={{ fontSize: isSelected ? '36px' : '28px', fontWeight: '800', color: 'var(--text-dark)', transition: 'font-size 0.3s', marginBottom: '8px' }}>
+                  {item.date}
+                </div>
+                
+                {/* 안 고른 날 일정 살짝 크게 보여주기 */}
+                {!isSelected && item.plan && (
+                  <div style={{ fontSize: '13px', color: 'var(--yonsei-blue)', fontWeight: 'bold', background: 'rgba(0,56,118,0.1)', padding: '6px', borderRadius: '8px', wordBreak: 'keep-all', lineHeight: '1.2' }}>
+                    {item.plan}
                   </div>
-                );
-              })}
-            </div>
-          );
+                )}
+              </div>
+
+              {/* 축소 모드 하단 내용 (날씨, 가계부 등) */}
+              {!isSelected && (
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', marginTop: '16px', width: '100%' }}>
+                  {item.expense > 0 && <span style={{ fontSize: '12px', fontWeight: '600', color: '#64748b' }}>₩</span>}
+                  {getWeatherIcon(item.weather)}
+                </div>
+              )}
+
+              {/* 확장 모드 (상세 보기) 내용 */}
+              <AnimatePresence>
+                {isSelected && (
+                  <motion.div 
+                    initial={{ opacity: 0 }} 
+                    animate={{ opacity: 1 }} 
+                    exit={{ opacity: 0 }}
+                    transition={{ delay: 0.1 }}
+                    style={{ display: 'flex', flexDirection: 'column', flex: 1, gap: '20px' }}
+                  >
+                    {/* 날씨 정보 */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', background: '#f8fafc', padding: '12px 16px', borderRadius: '16px' }}>
+                      {getWeatherIcon(item.weather)}
+                      <div>
+                        <div style={{ fontSize: '14px', fontWeight: 'bold' }}>{item.temp}</div>
+                        <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+                          {item.weather === 'sun' ? '맑고 화창한 날씨' : item.weather === 'cloud' ? '구름이 많은 날씨' : '비가 오는 날씨'}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* 가계부 모듈 */}
+                    <div style={{ background: item.expense > 0 ? 'var(--yonsei-blue)' : '#f1f5f9', color: item.expense > 0 ? 'white' : 'var(--text-dark)', padding: '16px', borderRadius: '16px', transition: 'all 0.3s' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px', fontSize: '14px', fontWeight: '600', justifyContent: 'flex-start' }}>
+                        <Wallet size={16} /> 
+                        {item.expense > 0 ? '실제 지출 내역' : '예상 지출 플랜'}
+                      </div>
+                      <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-start' }}>
+                        <input 
+                          type="number" 
+                          value={expenseInput}
+                          onChange={(e) => setExpenseInput(e.target.value)}
+                          placeholder="금액 입력" 
+                          style={{ flex: 1, padding: '10px 12px', borderRadius: '8px', border: 'none', outline: 'none', background: 'rgba(255,255,255,0.9)', color: '#333', fontSize: '16px', fontWeight: 'bold', textAlign: 'left' }} 
+                        />
+                        <button onClick={handleSaveExpense} className="btn-primary" style={{ padding: '0 16px', background: item.expense > 0 ? 'rgba(255,255,255,0.2)' : 'var(--yonsei-blue)', color: item.expense > 0 ? 'white' : 'white' }}>
+                          저장
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* 일정 및 메모장 */}
+                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      <h4 style={{ margin: 0, fontSize: '14px', color: 'var(--text-muted)' }}>일정 및 메모</h4>
+                      
+                      {item.plan && (
+                        <div style={{ padding: '12px 16px', background: 'rgba(0,56,118,0.05)', borderRadius: '12px', fontSize: '14px', fontWeight: '600', color: 'var(--yonsei-blue)', borderLeft: '4px solid var(--yonsei-blue)' }}>
+                          {item.plan}
+                        </div>
+                      )}
+
+                      <div style={{ flex: 1, background: '#f8fafc', borderRadius: '16px', padding: '16px', position: 'relative' }}>
+                        {isEditingMemo ? (
+                          <div style={{ display: 'flex', flexDirection: 'column', height: '100%', gap: '10px' }}>
+                            <textarea 
+                              value={memoText}
+                              onChange={(e) => setMemoText(e.target.value)}
+                              placeholder="오늘의 밥약 후기나 일기를 남겨보세요." 
+                              style={{ flex: 1, width: '100%', resize: 'none', border: 'none', background: 'transparent', outline: 'none', fontSize: '14px', lineHeight: '1.6', fontFamily: 'inherit' }}
+                            />
+                            <button onClick={handleSaveMemo} style={{ alignSelf: 'flex-end', display: 'flex', alignItems: 'center', gap: '4px', padding: '6px 12px', borderRadius: '8px', background: 'var(--text-dark)', color: 'white', border: 'none', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>
+                              <Check size={14} /> 완료
+                            </button>
+                          </div>
+                        ) : (
+                          <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+                            <div style={{ flex: 1, fontSize: '14px', lineHeight: '1.6', color: 'var(--text-dark)', background: 'white', padding: '16px', borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: '0 2px 5px rgba(0,0,0,0.02)' }}>
+                              {selectedDate.memo}
+                            </div>
+                            <button onClick={() => setIsEditingMemo(true)} style={{ position: 'absolute', bottom: '16px', right: '16px', width: '36px', height: '36px', borderRadius: '50%', background: 'white', border: '1px solid #e2e8f0', display: 'flex', justifyContent: 'center', alignItems: 'center', cursor: 'pointer', boxShadow: '0 4px 10px rgba(0,0,0,0.05)' }}>
+                              <Edit2 size={16} color="var(--text-muted)" />
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.div>
+          )
         })}
       </div>
     </div>

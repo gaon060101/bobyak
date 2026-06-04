@@ -1,84 +1,132 @@
+@import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;500;600;700&display=swap');
+
+:root {
+  --yonsei-blue: #003876; /* 연세대 로얄 블루 */
+  --yonsei-light-blue: #3d7cc4;
+  --yonsei-dark-blue: #00224a;
+  
+  --bg-color: #f8fafc;
+  --text-dark: #1e293b;
+  --text-muted: #64748b;
+  --text-light: #94a3b8;
+  
+  --glass-bg: rgba(255, 255, 255, 0.7);
+  --glass-border: rgba(255, 255, 255, 0.4);
+  --glass-shadow: 0 8px 32px rgba(0, 56, 118, 0.08);
+  
+  --manner-red: #ff5a5a;
+  --manner-orange: #ff9d00;
+  --manner-green: #2ecc71;
+  --manner-blue: #00b4d8;
+}
+
+* {
+  box-sizing: border-box;
+  font-family: 'Pretendard', sans-serif;
+}
+
 html, body, #root {
   margin: 0;
   padding: 0;
-  height: 100vh;
   width: 100vw;
-  background-color: #f4f6f8;
-  font-family: sans-serif;
+  height: 100vh;
+  background-color: var(--bg-color);
+  background-image: 
+    radial-gradient(at 0% 0%, rgba(0, 56, 118, 0.1) 0px, transparent 50%),
+    radial-gradient(at 100% 100%, rgba(61, 124, 196, 0.1) 0px, transparent 50%);
+  background-attachment: fixed;
+  color: var(--text-dark);
+  overflow: hidden;
 }
 
+/* Glassmorphism Utilities */
+.glass {
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+  border-radius: 24px;
+}
+
+.glass-panel {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  border-radius: 20px;
+}
+
+/* Base Layout */
 .app-container {
   display: flex;
-  width: 100%;
+  width: 100vw;
   height: 100vh;
 }
 
-.sidebar {
-  width: 250px;
-  background-color: #ffffff;
-  box-shadow: 2px 0 15px rgba(0,0,0,0.03);
-  padding: 40px 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
 }
-
-.sidebar h1 {
-  text-align: center;
-  font-size: 24px;
-  margin-bottom: 40px;
-  color: #333;
-}
-
-.tab-button {
-  padding: 18px 25px;
-  border: none;
+::-webkit-scrollbar-track {
   background: transparent;
-  cursor: pointer;
-  font-size: 16px;
-  text-align: left;
-  border-radius: 50px;
-  transition: all 0.2s ease;
-  display: flex;
-  align-items: center;
-  gap: 15px;
-  color: #666;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
 }
 
-.tab-button:hover {
-  background-color: #f0f4f8;
-}
-
-.tab-button.active {
-  background-color: #007bff;
+/* Common Buttons */
+.btn-primary {
+  background: linear-gradient(135deg, var(--yonsei-blue), var(--yonsei-light-blue));
   color: white;
-}
-
-.content-area {
-  flex: 1;
-  padding: 50px 80px;
-  overflow-y: auto;
-}
-
-.circle-btn {
-  border-radius: 50%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
   border: none;
+  border-radius: 12px;
+  padding: 12px 24px;
+  font-weight: 600;
   cursor: pointer;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-  transition: transform 0.2s;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(0, 56, 118, 0.2);
+}
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 56, 118, 0.3);
+}
+.btn-primary:active {
+  transform: translateY(0);
 }
 
-.circle-btn:hover {
-  transform: scale(1.05);
-}
-
-.card {
+.btn-secondary {
   background: white;
-  border-radius: 50px;
-  padding: 40px;
-  box-shadow: 0 8px 30px rgba(0,0,0,0.04);
-  border: 1px solid #f0f0f0;
+  color: var(--yonsei-blue);
+  border: 1px solid var(--yonsei-blue);
+  border-radius: 12px;
+  padding: 12px 24px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.btn-secondary:hover {
+  background: #f0f6ff;
+}
+
+/* Tags */
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 100px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  background: rgba(0, 56, 118, 0.08);
+  color: var(--yonsei-blue);
+}
+.tag.active {
+  background: var(--yonsei-blue);
+  color: white;
 }

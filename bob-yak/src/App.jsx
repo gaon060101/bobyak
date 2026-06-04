@@ -1,4 +1,8 @@
 import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Map, Calendar, Users, MessageCircle, LogOut } from 'lucide-react';
+
+import Login from './components/Login';
 import MapTab from './components/MapTab';
 import CalendarTab from './components/CalenderTab';
 import MatchTab from './components/MatchTab';
@@ -7,113 +11,116 @@ import MessengerTab from './components/MessengerTab';
 export default function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userInfo, setUserInfo] = useState({ email: '', nickname: '' });
-  const [activeTab, setActiveTab] = useState('map'); 
-  
-  const [isLoginMode, setIsLoginMode] = useState(true);
-  const [emailInput, setEmailInput] = useState('');
-  const [passwordInput, setPasswordInput] = useState('');
-  const [nicknameInput, setNicknameInput] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState('match'); 
   const [showUserMenu, setShowUserMenu] = useState(false);
 
-  const handleAuthSubmit = (e) => {
-    e.preventDefault();
-    setIsLoading(true);
-    setTimeout(() => {
-      setIsLoading(false);
-      setUserInfo({ 
-        email: emailInput, 
-        nickname: nicknameInput || emailInput.split('@')[0] 
-      });
-      setIsLoggedIn(true);
-      setActiveTab('map'); 
-    }, 1000);
+  const handleLogin = (info) => {
+    setUserInfo(info);
+    setIsLoggedIn(true);
+    setActiveTab('match');
   };
 
   const handleLogout = () => {
     setIsLoggedIn(false);
     setShowUserMenu(false);
-    setEmailInput('');
-    setPasswordInput('');
-    setNicknameInput('');
     setUserInfo({ email: '', nickname: '' });
   };
 
   if (!isLoggedIn) {
-    return (
-      <div style={{ fontFamily: 'system-ui', background: '#f4f6f9', minHeight: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '20px' }}>
-        {/* 깨졌던 너비 설정을 maxWidth: '400px', width: '100%'로 완벽 복구 */}
-        <div style={{ padding: '35px', maxWidth: '400px', width: '100%', background: 'white', borderRadius: '30px', boxShadow: '0 10px 40px rgba(0,0,0,0.05)', boxSizing: 'border-box' }}>
-          <div style={{ textAlign: 'center', marginBottom: '25px' }}>
-            <div style={{ fontSize: '40px' }}>🦉</div>
-            <h2 style={{ color: '#007bff', margin: '5px 0', fontSize: '24px' }}>연세 밥약</h2>
-            <p style={{ margin: 0, fontSize: '13.5px', color: '#888' }}>
-              {isLoginMode ? '서비스 이용을 위해 로그인해주세요.' : '환영합니다! 정보를 입력해주세요.'}
-            </p>
-          </div>
-          
-          <form onSubmit={handleAuthSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-            {!isLoginMode && (
-              <input type="text" placeholder="닉네임" value={nicknameInput} onChange={(e) => setNicknameInput(e.target.value)} required style={{ padding: '12px', borderRadius: '10px', border: '1px solid #ddd', fontSize: '14px', outline: 'none' }} />
-            )}
-            <input type="email" placeholder="이메일 (@yonsei.ac.kr)" value={emailInput} onChange={(e) => setEmailInput(e.target.value)} required style={{ padding: '12px', borderRadius: '10px', border: '1px solid #ddd', fontSize: '14px', outline: 'none' }} />
-            <input type="password" placeholder="비밀번호" value={passwordInput} onChange={(e) => setPasswordInput(e.target.value)} required style={{ padding: '12px', borderRadius: '10px', border: '1px solid #ddd', fontSize: '14px', outline: 'none' }} />
-            <button type="submit" style={{ padding: '14px', background: '#007bff', color: 'white', border: 'none', borderRadius: '10px', fontWeight: 'bold', cursor: 'pointer', marginTop: '5px', fontSize: '14px' }}>
-              {isLoginMode ? '로그인' : '회원가입 완료'}
-            </button>
-          </form>
-          
-          <div style={{ textAlign: 'center', marginTop: '15px', fontSize: '12.5px', color: '#666' }}>
-            {isLoginMode ? '계정이 없으신가요? ' : '이미 계정이 있나요? '}
-            <span onClick={() => setIsLoginMode(!isLoginMode)} style={{ color: '#007bff', cursor: 'pointer', textDecoration: 'underline', fontWeight: 'bold' }}>
-              {isLoginMode ? '회원가입' : '로그인'}
-            </span>
-          </div>
-        </div>
-      </div>
-    );
+    return <Login onLogin={handleLogin} />;
   }
 
+  const tabs = [
+    { id: 'match', label: '밥약 매칭', icon: <Users size={18} /> },
+    { id: 'map', label: '지도 예약', icon: <Map size={18} /> },
+    { id: 'calendar', label: '내 캘린더', icon: <Calendar size={18} /> },
+    { id: 'messenger', label: '메신저', icon: <MessageCircle size={18} /> }
+  ];
+
   return (
-    <div style={{ fontFamily: 'system-ui', background: '#f4f6f9', minHeight: '100vh', padding: '20px 10px', boxSizing: 'border-box' }}>
-      <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
+    <div className="app-container" style={{ padding: '24px', boxSizing: 'border-box' }}>
+      <div style={{ maxWidth: '1200px', width: '100%', margin: '0 auto', display: 'flex', flexDirection: 'column', height: '100%' }}>
         
-        {/* 글로벌 네비게이션 바 */}
-        <nav style={{ background: 'white', padding: '12px 25px', borderRadius: '25px', boxShadow: '0 4px 15px rgba(0,0,0,0.02)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'relative', marginBottom: '20px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '25px' }}>
-            <span style={{ fontWeight: 'bold', fontSize: '17px', color: '#007bff' }}>연세 밥약 🦉</span>
-            <div style={{ display: 'flex', gap: '4px' }}>
-              {[
-                { id: 'map', label: '🗺️ 지도 예약' },
-                { id: 'calendar', label: '📅 내 캘린더' },
-                { id: 'match', label: '🤝 밥약 매칭' },
-                { id: 'messenger', label: '💬 메신저' }
-              ].map(tab => (
-                <button key={tab.id} onClick={() => setActiveTab(tab.id)} style={{ padding: '8px 14px', borderRadius: '12px', border: 'none', cursor: 'pointer', background: activeTab === tab.id ? '#f0f7ff' : 'transparent', color: activeTab === tab.id ? '#007bff' : '#666', fontWeight: activeTab === tab.id ? 'bold' : 'normal', fontSize: '13.5px', transition: 'all 0.2s' }}>{tab.label}</button>
+        {/* 네비게이션 바 */}
+        <motion.nav 
+          className="glass-panel"
+          initial={{ y: -20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          style={{ padding: '12px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', zIndex: 50, position: 'relative' }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '40px' }}>
+            <span style={{ fontWeight: '800', fontSize: '20px', color: 'var(--yonsei-blue)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ fontSize: '24px' }}>🦉</span> 연세 밥약
+            </span>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              {tabs.map(tab => (
+                <button 
+                  key={tab.id} 
+                  onClick={() => setActiveTab(tab.id)} 
+                  style={{ 
+                    display: 'flex', alignItems: 'center', gap: '8px', 
+                    padding: '10px 16px', borderRadius: '12px', border: 'none', cursor: 'pointer',
+                    background: activeTab === tab.id ? 'var(--yonsei-blue)' : 'transparent', 
+                    color: activeTab === tab.id ? 'white' : 'var(--text-muted)', 
+                    fontWeight: activeTab === tab.id ? '600' : '500',
+                    fontSize: '15px', transition: 'all 0.2s ease'
+                  }}
+                >
+                  {tab.icon} {tab.label}
+                </button>
               ))}
             </div>
           </div>
           
-          <button onClick={() => setShowUserMenu(!showUserMenu)} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 12px', borderRadius: '20px', background: 'white', border: '1px solid #e0e0e0', cursor: 'pointer' }}>
-            <div style={{ width: '26px', height: '26px', background: '#007bff', color: 'white', borderRadius: '50%', display: 'flex', justifyContent: 'center', alignItems: 'center', fontSize: '12px', fontWeight: 'bold' }}>{userInfo.nickname.charAt(0)}</div>
-            <span style={{ fontSize: '12.5px', fontWeight: 'bold', color: '#555' }}>{userInfo.nickname} 님</span>
-          </button>
-          
-          {showUserMenu && (
-            <div style={{ position: 'absolute', top: '60px', right: '25px', background: 'white', border: '1px solid #eee', borderRadius: '12px', padding: '12px', width: '180px', boxShadow: '0 8px 20px rgba(0,0,0,0.08)', zIndex: 100 }}>
-              <div style={{ fontSize: '13px', fontWeight: 'bold', marginBottom: '3px', color: '#333' }}>{userInfo.nickname}</div>
-              <div style={{ fontSize: '11px', color: '#888', marginBottom: '10px', wordBreak: 'break-all' }}>{userInfo.email}</div>
-              <button onClick={handleLogout} style={{ width: '100%', padding: '6px', background: '#ffeeee', color: '#c62828', border: 'none', borderRadius: '6px', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer' }}>로그아웃</button>
-            </div>
-          )}
-        </nav>
+          <div style={{ position: 'relative' }}>
+            <button 
+              onClick={() => setShowUserMenu(!showUserMenu)} 
+              style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '6px 16px 6px 6px', borderRadius: '100px', background: 'rgba(255,255,255,0.5)', border: '1px solid rgba(0,0,0,0.05)', cursor: 'pointer', transition: 'all 0.2s' }}
+            >
+              <div style={{ width: '32px', height: '32px', background: 'var(--yonsei-blue)', color: 'white', borderRadius: '50%', display: 'flex', justifyContent: 'center', alignItems: 'center', fontSize: '14px', fontWeight: 'bold' }}>
+                {userInfo.nickname.charAt(0)}
+              </div>
+              <span style={{ fontSize: '14px', fontWeight: '600', color: 'var(--text-dark)' }}>{userInfo.nickname}</span>
+            </button>
+            
+            <AnimatePresence>
+              {showUserMenu && (
+                <motion.div 
+                  initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                  style={{ position: 'absolute', top: '50px', right: '0', background: 'white', border: '1px solid #eee', borderRadius: '16px', padding: '16px', width: '220px', boxShadow: '0 10px 30px rgba(0,0,0,0.1)', zIndex: 100 }}
+                >
+                  <div style={{ fontSize: '15px', fontWeight: '700', marginBottom: '4px', color: 'var(--text-dark)' }}>{userInfo.nickname}</div>
+                  <div style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '16px', wordBreak: 'break-all' }}>{userInfo.email}</div>
+                  <button 
+                    onClick={handleLogout} 
+                    style={{ width: '100%', padding: '10px', background: '#fef2f2', color: '#ef4444', border: 'none', borderRadius: '10px', fontSize: '14px', fontWeight: '600', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', transition: 'background 0.2s' }}
+                    onMouseOver={e => e.currentTarget.style.background = '#fee2e2'}
+                    onMouseOut={e => e.currentTarget.style.background = '#fef2f2'}
+                  >
+                    <LogOut size={16} /> 로그아웃
+                  </button>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        </motion.nav>
 
-        <main style={{ background: 'white', borderRadius: '35px', padding: '25px', boxShadow: '0 8px 25px rgba(0,0,0,0.02)', minHeight: '560px', boxSizing: 'border-box' }}>
+        {/* 메인 콘텐츠 영역 */}
+        <motion.main 
+          className="glass-panel"
+          key={activeTab}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+          style={{ flex: 1, padding: '30px', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}
+        >
           {activeTab === 'map' && <MapTab />}
           {activeTab === 'calendar' && <CalendarTab />}
-          {activeTab === 'match' && <MatchTab />}
-          {activeTab === 'messenger' && <MessengerTab />}
-        </main>
+          {activeTab === 'match' && <MatchTab userInfo={userInfo} setUserInfo={setUserInfo} />}
+          {activeTab === 'messenger' && <MessengerTab userInfo={userInfo} />}
+        </motion.main>
       </div>
     </div>
   );

@@ -1,161 +1,342 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { MapPin, Star, Calendar, Clock, ChevronRight, MessageSquare } from 'lucide-react';
 
 export default function MapTab() {
   const [selectedPlace, setSelectedPlace] = useState(null);
-  const [selectedDate, setSelectedDate] = useState(null);
-  const [reviewInput, setReviewInput] = useState('');
-  const [ratingInput, setRatingInput] = useState(5);
-  const [userReviews, setUserReviews] = useState({});
-  const [activeFilter, setActiveFilter] = useState('All');
+  const [categoryFilter, setCategoryFilter] = useState('전체');
+  const [myReviewText, setMyReviewText] = useState('');
+  const [myReviewScore, setMyReviewScore] = useState(5);
+  const [showAllReviews, setShowAllReviews] = useState(false);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [newPlace, setNewPlace] = useState({ name: '', type: '식당', tag: '', address: '' });
+  
+  const [hotPlaces, setHotPlaces] = useState([
+    { id: 1, name: '독수리 다방', type: '카페', rating: 4.8, distance: '100m', tag: '#백양로', reviews: 128, top: '40%', left: '45%', reviewList: [{user: '연희동불주먹', text: '뷰가 미쳤어요! 카공하기 딱 좋음', score: 5}, {user: '마라탕사랑해', text: '자리잡기 너무 힘들어요', score: 4}] },
+    { id: 2, name: '스탠바이키친', type: '식당', rating: 4.6, distance: '300m', tag: '#이대후문', reviews: 256, top: '25%', left: '70%', reviewList: [{user: '신촌자취생', text: '샌드위치 양도 많고 맛있음', score: 5}] },
+    { id: 3, name: '포포나무', type: '식당', rating: 4.5, distance: '400m', tag: '#신촌명물거리', reviews: 89, top: '65%', left: '35%', reviewList: [{user: '새내기24', text: '가성비 최고 밥집입니다', score: 4}, {user: '화석학번', text: '요즘 폼 미쳤다', score: 5}] },
+    { id: 4, name: '신촌 황소곱창', type: '술집', rating: 4.7, distance: '500m', tag: '#창천동', reviews: 512, top: '75%', left: '60%', reviewList: [{user: '알콜중독자', text: '곱창은 무조건 여기지', score: 5}] }
+  ]);
 
-  const places = [
-    { id: 1, name: "하이디라오 신촌점", category: "🍲 식당", rating: 4.8, top: "45%", left: "50%", review: "마라탕 4단계 도전해봤는데 진짜 강렬해요! 중간고사 스트레스 풀기 딱 좋음." },
-    { id: 2, name: "독수리다방", category: "☕ 카페", rating: 4.5, top: "35%", left: "40%", review: "분위기 좋고 백양로가 한눈에 보이는 창가 자리가 완전 명당입니다." },
-    { id: 3, name: "쟁반집8292", category: "🥩 식당", rating: 4.7, top: "55%", left: "60%", review: "가성비 최고 고깃집! 특수부위 모듬 쟁반 구성이 너무 알차요." },
-    { id: 4, name: "원앤온리커피", category: "☕ 카페", rating: 4.6, top: "25%", left: "70%", review: "말차라떼가 시그니처인데 엄청 진하고 브라우니도 맛집임." },
-    { id: 5, name: "신촌황소곱창", category: "🍻 술집", rating: 4.4, top: "65%", left: "45%", review: "기름진 곱창에 소주 한잔 마시기 좋은 전통의 신촌 핫플." },
-    { id: 6, name: "샌드커피 논탄토", category: "☕ 카페", rating: 4.8, top: "40%", left: "65%", review: "터키식 샌드커피 신기하고 오리지널 카이막 맛은 감동 그 자체." },
-    { id: 7, name: "다성 일식", category: "🍣 식당", rating: 4.3, top: "30%", left: "30%", review: "회 무한리필 퀄리티가 좋아서 격식 있는 밥약 장소로 제격." },
-    { id: 10, name: "역전할머니맥주", category: "🍻 술집", rating: 4.2, top: "60%", left: "75%", review: "살얼음 맥주에 짜파구리 조합은 가벼운 2차 약속으로 최고." }
-  ];
+  const filteredPlaces = categoryFilter === '전체' ? hotPlaces : hotPlaces.filter(p => p.type === categoryFilter);
 
-  // 평점 4.5 이상의 장소만 핫플레이스로 선별
-  const hotPlaces = places.filter(p => p.rating >= 4.5);
-  const filteredPlaces = activeFilter === 'All' ? places : places.filter(place => place.category.includes(activeFilter));
-  const filteredHotPlaces = activeFilter === 'All' ? hotPlaces : hotPlaces.filter(place => place.category.includes(activeFilter));
-
-  const getMarkerColor = (category, isSelected) => {
-    if (category.includes('카페')) return isSelected ? '#8d6e63' : 'rgba(141, 110, 99, 0.85)';
-    if (category.includes('술집')) return isSelected ? '#ab47bc' : 'rgba(171, 71, 188, 0.85)';
-    return isSelected ? '#ff5252' : 'rgba(255, 82, 82, 0.85)';
+  // 14일 스케줄러 목업 (오늘부터 14일)
+  const generateDates = () => {
+    const dates = [];
+    const today = new Date();
+    for(let i=0; i<14; i++) {
+      const d = new Date(today);
+      d.setDate(d.getDate() + i);
+      dates.push({
+        id: i,
+        day: d.getDate(),
+        week: ['일','월','화','수','목','금','토'][d.getDay()],
+        isAvailable: Math.random() > 0.3,
+        isToday: i === 0,
+        fullDate: `${d.getMonth() + 1}월 ${d.getDate()}일`
+      });
+    }
+    return dates;
   };
-
-  const handleReviewSubmit = () => {
-    if (!reviewInput.trim()) return;
-    setUserReviews(prev => ({
-      ...prev,
-      [selectedPlace.id]: [{ text: reviewInput, rating: ratingInput }, ...(prev[selectedPlace.id] || [])]
-    }));
-    setReviewInput('');
-  };
+  
+  const [dates] = useState(generateDates());
+  const [selectedDate, setSelectedDate] = useState(dates[0]);
 
   return (
-    <div style={{ height: '100%', display: 'flex', flexDirection: 'column', gap: '15px' }}>
-      <div>
-        <h2 style={{ margin: 0, marginBottom: '5px' }}>🗺️ 지도 예약 및 핫플레이스</h2>
-        <p style={{ margin: 0, fontSize: '13.5px', color: '#666' }}>왼쪽 실시간 핫플 목록이나 지도의 서클 마커를 선택해 상세 일정을 조율하세요.</p>
-      </div>
-      
-      {/* 카테고리 필터 버튼 */}
-      <div style={{ display: 'flex', gap: '8px' }}>
-        {['All', '식당', '카페', '술집'].map(filterType => (
-          <button
-            key={filterType} onClick={() => { setActiveFilter(filterType); setSelectedPlace(null); }}
-            style={{ padding: '8px 16px', borderRadius: '20px', fontSize: '13px', fontWeight: 'bold', border: activeFilter === filterType ? 'none' : '1px solid #ddd', background: activeFilter === filterType ? '#007bff' : 'white', color: activeFilter === filterType ? 'white' : '#555', cursor: 'pointer', transition: 'all 0.2s' }}
+    <div style={{ display: 'flex', height: '100%', gap: '24px', flex: 1, minHeight: 0, width: '100%' }}>
+      {/* 왼쪽 사이드바 - 핫플레이스 리스트 */}
+      <div style={{ width: '320px', minWidth: '320px', flexShrink: 0, display: 'flex', flexDirection: 'column', gap: '16px', overflowY: 'auto', paddingRight: '8px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <h2 style={{ fontSize: '18px', margin: 0, color: 'var(--yonsei-blue)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <MapPin size={20} fill="var(--yonsei-blue)" color="white" /> 실시간 핫플
+          </h2>
+          <button 
+            onClick={() => setShowAddModal(true)}
+            style={{ padding: '6px 12px', borderRadius: '8px', background: '#f1f5f9', color: 'var(--yonsei-blue)', border: 'none', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer' }}
           >
-            {filterType === 'All' ? '🌐 전체' : filterType === '식당' ? '🍚 식당' : filterType === '카페' ? '☕ 카페' : '🍻 술집'}
+            + 핫플 등록
           </button>
-        ))}
-      </div>
-      
-      <div style={{ display: 'flex', gap: '20px', flex: 1, minHeight: '520px', position: 'relative' }}>
+        </div>
         
-        {/* 좌측 사이드바: 핫플레이스 목록 */}
-        <div className="custom-scroll" style={{ width: '250px', display: 'flex', flexDirection: 'column', gap: '10px', overflowY: 'auto', maxHeight: '520px' }}>
-          <div style={{ fontSize: '12px', fontWeight: 'bold', color: '#ff5252', paddingLeft: '5px' }}>🔥 실시간 검증된 핫플 리스트</div>
-          {filteredHotPlaces.map(place => (
-            <div 
-              key={place.id} onClick={() => { setSelectedPlace(place); setSelectedDate(null); }}
-              style={{ padding: '14px', borderRadius: '18px', background: selectedPlace?.id === place.id ? '#f0f7ff' : '#fff', border: selectedPlace?.id === place.id ? '1.5px solid #007bff' : '1.5px solid #eaeaea', cursor: 'pointer', transition: 'all 0.2s' }}
+        <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
+          {['전체', '식당', '카페', '술집'].map(cat => (
+            <button
+              key={cat}
+              onClick={() => setCategoryFilter(cat)}
+              style={{
+                flex: 1, padding: '6px', borderRadius: '8px', fontSize: '13px', fontWeight: 'bold', cursor: 'pointer', border: '1px solid #e2e8f0', transition: 'all 0.2s',
+                background: categoryFilter === cat ? 'var(--yonsei-blue)' : 'white',
+                color: categoryFilter === cat ? 'white' : 'var(--text-muted)'
+              }}
             >
-              <div style={{ fontWeight: 'bold', fontSize: '13.5px', color: '#333' }}>{place.name}</div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', marginTop: '6px' }}>
-                <span style={{ color: '#888' }}>{place.category}</span>
-                <span style={{ color: '#ffb300', fontWeight: 'bold' }}>★ {place.rating}</span>
-              </div>
-            </div>
+              {cat}
+            </button>
           ))}
         </div>
 
-        {/* 우측 맵 뷰포트 */}
-        <div style={{ flex: 1, borderRadius: '25px', position: 'relative', overflow: 'hidden', border: '1px solid #e2e8f0' }}>
-          <iframe src="https://maps.google.com/maps?q=신촌역&output=embed" width="100%" height="100%" style={{ border: 0, pointerEvents: 'none' }} allowFullScreen="" loading="lazy" title="신촌 지도"></iframe>
-          {filteredPlaces.map(place => {
-            const isSelected = selectedPlace?.id === place.id;
-            return (
-              <button 
-                key={place.id} className="circle-btn"
-                style={{ position: 'absolute', top: place.top, left: place.left, transform: 'translate(-50%, -50%)', width: '38px', height: '38px', background: getMarkerColor(place.category, isSelected), color: 'white', fontSize: '16px', border: isSelected ? '2px solid white' : 'none', zIndex: isSelected ? 10 : 1 }}
-                onClick={() => { setSelectedPlace(place); setSelectedDate(null); }}
+        {filteredPlaces.map(place => (
+          <motion.div 
+            key={place.id}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={() => setSelectedPlace(place)}
+            style={{ 
+              padding: '16px', 
+              borderRadius: '16px', 
+              background: selectedPlace?.id === place.id ? 'var(--yonsei-blue)' : 'rgba(255,255,255,0.6)', 
+              color: selectedPlace?.id === place.id ? 'white' : 'var(--text-dark)',
+              border: '1px solid rgba(0,56,118,0.1)',
+              cursor: 'pointer',
+              boxShadow: selectedPlace?.id === place.id ? '0 8px 20px rgba(0,56,118,0.2)' : '0 2px 8px rgba(0,0,0,0.02)'
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+              <span style={{ fontWeight: '700', fontSize: '16px' }}>{place.name}</span>
+              <span style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '14px', fontWeight: '600', color: selectedPlace?.id === place.id ? '#ffdb58' : 'var(--manner-orange)' }}>
+                <Star size={14} fill="currentColor" /> {place.rating}
+              </span>
+            </div>
+            <div style={{ display: 'flex', gap: '8px', fontSize: '12px', color: selectedPlace?.id === place.id ? 'rgba(255,255,255,0.8)' : 'var(--text-muted)' }}>
+              <span>{place.type}</span> • <span>{place.distance}</span>
+            </div>
+            <div style={{ marginTop: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span className="tag" style={{ background: selectedPlace?.id === place.id ? 'rgba(255,255,255,0.2)' : '', color: selectedPlace?.id === place.id ? 'white' : '' }}>
+                {place.tag}
+              </span>
+              <span style={{ fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px', color: selectedPlace?.id === place.id ? 'rgba(255,255,255,0.8)' : 'var(--text-muted)' }}>
+                <MessageSquare size={12} /> {place.reviews}
+              </span>
+            </div>
+          </motion.div>
+        ))}
+      </div>
+
+      {/* 오른쪽 메인 영역 */}
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        {/* 지도 영역 */}
+        <div style={{ flex: 1, borderRadius: '20px', background: '#e2e8f0', position: 'relative', overflow: 'hidden', border: '1px solid rgba(0,0,0,0.05)', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+          <iframe 
+            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3162.290076773539!2d126.936814!3d37.561995!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x357c988c52089453%3A0xc34df37f8fa5534!2sYonsei%20University!5e0!3m2!1sen!2skr!4v1680000000000!5m2!1sen!2skr" 
+            width="100%" 
+            height="100%" 
+            style={{ border: 0, position: 'absolute', inset: 0 }} 
+            allowFullScreen="" 
+            loading="lazy" 
+            referrerPolicy="no-referrer-when-downgrade"
+          ></iframe>
+          
+          <div style={{ position: 'absolute', inset: 0 }}>
+            {filteredPlaces.map(place => (
+              <motion.div 
+                key={place.id}
+                onClick={() => setSelectedPlace(place)}
+                whileHover={{ scale: 1.1, zIndex: 30 }}
+                style={{ 
+                  position: 'absolute', top: place.top, left: place.left, transform: 'translate(-50%, -50%)',
+                  padding: '8px 12px', background: selectedPlace?.id === place.id ? 'var(--yonsei-blue)' : 'white', 
+                  color: selectedPlace?.id === place.id ? 'white' : 'var(--text-dark)',
+                  borderRadius: '100px', fontSize: '13px', fontWeight: 'bold', 
+                  boxShadow: selectedPlace?.id === place.id ? '0 6px 16px rgba(0,56,118,0.4)' : '0 4px 12px rgba(0,0,0,0.1)', 
+                  display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', zIndex: selectedPlace?.id === place.id ? 25 : 10
+                }}
               >
-                {place.category.split(' ')[0]}
-              </button>
-            );
-          })}
-        </div>
+                <div style={{ 
+                  width: '10px', height: '10px', borderRadius: '50%', 
+                  background: place.type === '식당' ? 'var(--manner-red)' : place.type === '카페' ? 'var(--yonsei-light-blue)' : 'var(--manner-orange)' 
+                }}></div> 
+                {place.name}
+              </motion.div>
+            ))}
+          </div>
 
-        {/* 우측 예약 오버레이 상세 패널 */}
-        {selectedPlace && (
-          <div className="custom-scroll" style={{ position: 'absolute', top: 0, right: 0, width: '330px', height: '100%', boxSizing: 'border-box', background: 'white', padding: '25px', borderRadius: '25px', boxShadow: '-5px 0 25px rgba(0,0,0,0.08)', zIndex: 20, overflowY: 'auto' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '10px' }}>
-              <h3 style={{ margin: 0, fontSize: '16.5px' }}>{selectedPlace.name}</h3>
-              <button onClick={() => setSelectedPlace(null)} style={{ background: 'none', border: 'none', fontSize: '18px', cursor: 'pointer', color: '#999' }}>✕</button>
-            </div>
-            <div style={{ display: 'flex', gap: '6px', fontSize: '11px', marginBottom: '15px' }}>
-              <span style={{ background: '#f0f0f0', padding: '2px 8px', borderRadius: '8px', color: '#555' }}>{selectedPlace.category}</span>
-              <span style={{ color: '#ffb300', fontWeight: 'bold' }}>★ {selectedPlace.rating}</span>
-            </div>
-
-            <div style={{ background: '#f8f9fa', padding: '12px', borderRadius: '12px', marginBottom: '15px', fontSize: '12px', color: '#555', lineHeight: '1.4' }}>
-              "{selectedPlace.review}"
-            </div>
-
-            {/* 후기 피드 피드백 시스템 */}
-            <div style={{ marginBottom: '20px' }}>
-              <div style={{ display: 'flex', gap: '2px', marginBottom: '6px' }}>
-                {[1,2,3,4,5].map(star => (
-                  <span key={star} onClick={() => setRatingInput(star)} style={{ cursor: 'pointer', fontSize: '15px', color: star <= ratingInput ? '#ffb300' : '#e0e0e0' }}>★</span>
-                ))}
-              </div>
-              <div style={{ display: 'flex', gap: '4px' }}>
-                <input type="text" placeholder="방문 후 한줄평 남기기" value={reviewInput} onChange={(e) => setReviewInput(e.target.value)} style={{ flex: 1, padding: '8px 12px', borderRadius: '8px', border: '1px solid #ddd', fontSize: '12px', outline: 'none' }} />
-                <button onClick={handleReviewSubmit} style={{ background: '#4caf50', color: 'white', border: 'none', padding: '0 12px', borderRadius: '8px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>등록</button>
-              </div>
-              {userReviews[selectedPlace.id]?.map((rev, idx) => (
-                <div key={idx} style={{ marginTop: '8px', background: '#f0f7ff', padding: '8px 12px', borderRadius: '8px', fontSize: '11.5px', color: '#0056b3' }}>
-                  ✓ {rev.text}
+          <AnimatePresence>
+            {selectedPlace && (
+              <motion.div 
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                exit={{ y: 20, opacity: 0 }}
+                style={{ position: 'absolute', bottom: '20px', left: '20px', right: '20px', background: 'rgba(255,255,255,0.95)', backdropFilter: 'blur(20px)', borderRadius: '24px', padding: '24px', boxShadow: '0 20px 40px rgba(0,0,0,0.15)', border: '1px solid rgba(255,255,255,0.5)', zIndex: 100, display: 'flex', flexDirection: 'column', gap: '16px' }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                  <div>
+                    <h3 style={{ margin: '0 0 8px', fontSize: '20px', color: 'var(--yonsei-blue)' }}>{selectedPlace.name}</h3>
+                    <div style={{ fontSize: '13px', color: 'var(--text-muted)' }}>{selectedPlace.type} • {selectedPlace.distance}</div>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '16px', fontWeight: 'bold', color: 'var(--manner-orange)' }}>
+                    <Star fill="currentColor" /> {selectedPlace.rating}
+                  </div>
                 </div>
-              ))}
-            </div>
 
-            {/* 14일 실시간 타임라인 스케줄러 */}
-            <div style={{ borderTop: '1px solid #eee', paddingTop: '15px' }}>
-              <div style={{ fontSize: '13px', fontWeight: 'bold', color: '#333', marginBottom: '10px' }}>📆 예약 날짜 조율</div>
-              <div style={{ gridTemplateColumns: 'repeat(7, 1fr)', display: 'grid', gap: '5px', textAlign: 'center', marginBottom: '15px' }}>
-                {Array.from({ length: 14 }).map((_, i) => {
-                  const date = i + 1;
-                  const isFull = i === 2 || i === 11;
-                  return (
-                    <div 
-                      key={i} onClick={() => !isFull && setSelectedDate(date)}
-                      style={{
-                        height: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '6px', fontSize: '11px', fontWeight: 'bold',
-                        background: selectedDate === date ? '#007bff' : (isFull ? '#ffebee' : '#e8f5e9'),
-                        color: selectedDate === date ? 'white' : (isFull ? '#c62828' : '#2e7d32'), cursor: isFull ? 'not-allowed' : 'pointer', opacity: isFull ? 0.5 : 1
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                    <h4 style={{ margin: 0, fontSize: '14px' }}>예약 날짜 선택</h4>
+                    {selectedDate && <span style={{ fontSize: '13px', color: 'var(--yonsei-blue)', fontWeight: 'bold' }}>{selectedDate.fullDate} ({selectedDate.week}) 선택됨</span>}
+                  </div>
+                  <div style={{ display: 'flex', gap: '12px', overflowX: 'auto', paddingBottom: '8px' }}>
+                    {generateDates().map(date => (
+                      <button 
+                        key={date.id}
+                        onClick={() => setSelectedDate(date)}
+                        style={{ 
+                          flexShrink: 0, width: '60px', height: '70px', borderRadius: '16px', border: '1px solid #e2e8f0', cursor: 'pointer', transition: 'all 0.2s', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center',
+                          background: selectedDate?.id === date.id ? 'var(--yonsei-blue)' : 'white',
+                          color: selectedDate?.id === date.id ? 'white' : 'var(--text-dark)'
+                        }}
+                      >
+                        <span style={{ fontSize: '12px', fontWeight: 'bold', color: selectedDate?.id === date.id ? 'rgba(255,255,255,0.8)' : (date.week === '일' ? 'var(--manner-red)' : date.week === '토' ? 'var(--yonsei-light-blue)' : 'var(--text-muted)') }}>{date.week}</span>
+                        <span style={{ fontSize: '20px', fontWeight: '800' }}>{date.day}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div style={{ background: '#f8fafc', borderRadius: '16px', padding: '16px', display: 'flex', flexDirection: 'column', gap: '12px', maxHeight: showAllReviews ? '250px' : 'auto', overflowY: showAllReviews ? 'auto' : 'visible' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <h4 style={{ margin: 0, fontSize: '14px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <MessageSquare size={16} color="var(--yonsei-blue)" /> 실시간 한줄평
+                    </h4>
+                    {!showAllReviews && selectedPlace.reviewList?.length > 2 && (
+                      <button onClick={() => setShowAllReviews(true)} style={{ background: 'none', border: 'none', color: 'var(--yonsei-blue)', fontSize: '12px', cursor: 'pointer', fontWeight: 'bold' }}>
+                        더보기 ({selectedPlace.reviewList.length}개)
+                      </button>
+                    )}
+                  </div>
+                  
+                  {(showAllReviews ? selectedPlace.reviewList : selectedPlace.reviewList?.slice(0, 2)).map((rev, i) => (
+                    <div key={i} style={{ display: 'flex', gap: '8px', fontSize: '13px' }}>
+                      <span style={{ fontWeight: 'bold', color: 'var(--yonsei-blue)', minWidth: '80px' }}>{rev.user}</span>
+                      <span style={{ color: 'var(--text-dark)', flex: 1 }}>{rev.text}</span>
+                      <span style={{ display: 'flex', alignItems: 'center', color: 'var(--manner-orange)', fontSize: '11px', fontWeight: 'bold' }}><Star size={10} fill="currentColor" /> {rev.score}</span>
+                    </div>
+                  ))}
+                  
+                  {showAllReviews && (
+                    <button onClick={() => setShowAllReviews(false)} style={{ background: '#e2e8f0', border: 'none', color: 'var(--text-dark)', fontSize: '12px', padding: '6px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', marginTop: '4px' }}>
+                      접기
+                    </button>
+                  )}
+                  
+                  <div style={{ display: 'flex', gap: '8px', marginTop: '4px' }}>
+                    <select 
+                      value={myReviewScore} 
+                      onChange={(e) => setMyReviewScore(Number(e.target.value))}
+                      style={{ padding: '8px', borderRadius: '8px', border: '1px solid #e2e8f0', fontSize: '13px', outline: 'none', background: 'white' }}
+                    >
+                      <option value={5}>⭐⭐⭐⭐⭐</option>
+                      <option value={4}>⭐⭐⭐⭐</option>
+                      <option value={3}>⭐⭐⭐</option>
+                      <option value={2}>⭐⭐</option>
+                      <option value={1}>⭐</option>
+                    </select>
+                    <input 
+                      type="text" 
+                      placeholder="한줄평을 남겨보세요..." 
+                      value={myReviewText}
+                      onChange={(e) => setMyReviewText(e.target.value)}
+                      style={{ flex: 1, padding: '8px 12px', borderRadius: '8px', border: '1px solid #e2e8f0', fontSize: '13px', outline: 'none' }} 
+                    />
+                    <button 
+                      className="btn-secondary" 
+                      style={{ padding: '8px 12px', fontSize: '13px', whiteSpace: 'nowrap' }}
+                      onClick={() => {
+                        if (!myReviewText.trim()) return;
+                        selectedPlace.reviewList.unshift({ user: '나', text: myReviewText, score: myReviewScore });
+                        setMyReviewText('');
                       }}
                     >
-                      {date}
-                    </div>
-                  );
-                })}
+                      등록
+                    </button>
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '4px' }}>
+                  <button 
+                    className="btn-primary" 
+                    style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+                    onClick={() => {
+                      if(!selectedPlace) alert('식당을 먼저 선택해주세요.');
+                      else alert(`${selectedDate.day}일 ${selectedDate.week}요일에 '${selectedPlace.name}' 예약이 신청되었습니다!`);
+                    }}
+                  >
+                    예약 신청하기 <ChevronRight size={16} />
+                  </button>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      </div>
+
+      <AnimatePresence>
+        {showAddModal && (
+          <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 999 }}>
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              style={{ background: 'white', padding: '30px', borderRadius: '24px', width: '90%', maxWidth: '360px', boxShadow: '0 20px 40px rgba(0,0,0,0.2)' }}
+            >
+              <h3 style={{ margin: '0 0 20px', fontSize: '18px', color: 'var(--yonsei-blue)' }}>나만의 핫플레이스 등록하기</h3>
+              
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '24px' }}>
+                <div>
+                  <label style={{ display: 'block', marginBottom: '6px', fontSize: '13px', fontWeight: 'bold' }}>가게 이름</label>
+                  <input type="text" value={newPlace.name} onChange={e => setNewPlace({...newPlace, name: e.target.value})} placeholder="예: 스탠바이키친" style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', border: '1px solid #e2e8f0', outline: 'none' }} />
+                </div>
+                <div>
+                  <label style={{ display: 'block', marginBottom: '6px', fontSize: '13px', fontWeight: 'bold' }}>상세 주소 (위치)</label>
+                  <input type="text" value={newPlace.address} onChange={e => setNewPlace({...newPlace, address: e.target.value})} placeholder="예: 서대문구 신촌동 (마커는 임의 생성)" style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', border: '1px solid #e2e8f0', outline: 'none' }} />
+                </div>
+                <div>
+                  <label style={{ display: 'block', marginBottom: '6px', fontSize: '13px', fontWeight: 'bold' }}>분류</label>
+                  <select value={newPlace.type} onChange={e => setNewPlace({...newPlace, type: e.target.value})} style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', border: '1px solid #e2e8f0', outline: 'none', background: 'white' }}>
+                    <option value="식당">식당</option>
+                    <option value="카페">카페</option>
+                    <option value="술집">술집</option>
+                  </select>
+                </div>
+                <div>
+                  <label style={{ display: 'block', marginBottom: '6px', fontSize: '13px', fontWeight: 'bold' }}>해시태그 포인트</label>
+                  <input type="text" value={newPlace.tag} onChange={e => setNewPlace({...newPlace, tag: e.target.value})} placeholder="예: #연대동문, #가성비" style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', border: '1px solid #e2e8f0', outline: 'none' }} />
+                </div>
               </div>
-              <button disabled={!selectedDate} onClick={() => alert('약속 예약이 완료되었습니다!')} style={{ width: '100%', padding: '12px', borderRadius: '12px', background: selectedDate ? '#007bff' : '#ccc', color: 'white', border: 'none', fontSize: '13px', fontWeight: 'bold', cursor: 'pointer' }}>
-                {selectedDate ? `${selectedDate}일 실시간 밥약 선점하기` : '원하는 일정을 조율해 주세요'}
-              </button>
-            </div>
+
+              <div style={{ display: 'flex', gap: '12px' }}>
+                <button 
+                  onClick={() => setShowAddModal(false)}
+                  style={{ flex: 1, padding: '12px', borderRadius: '12px', border: 'none', background: '#f1f5f9', color: 'var(--text-muted)', fontWeight: 'bold', cursor: 'pointer' }}
+                >
+                  취소
+                </button>
+                <button 
+                  onClick={() => {
+                    if (!newPlace.name.trim()) return;
+                    setHotPlaces([{ 
+                      id: Date.now(), 
+                      name: newPlace.name, 
+                      type: newPlace.type, 
+                      rating: 5.0, 
+                      distance: newPlace.address || '새로 등록됨', 
+                      tag: newPlace.tag || '#신규', 
+                      reviews: 0, 
+                      top: `${Math.floor(Math.random() * 60) + 20}%`, 
+                      left: `${Math.floor(Math.random() * 60) + 20}%`, 
+                      reviewList: [] 
+                    }, ...hotPlaces]);
+                    setShowAddModal(false);
+                    setNewPlace({ name: '', type: '식당', tag: '', address: '' });
+                    alert('핫플레이스가 성공적으로 등록되었습니다!');
+                  }}
+                  className="btn-primary"
+                  style={{ flex: 1, padding: '12px', borderRadius: '12px' }}
+                >
+                  등록하기
+                </button>
+              </div>
+            </motion.div>
           </div>
         )}
-      </div>
+      </AnimatePresence>
     </div>
   );
 }
