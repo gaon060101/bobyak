@@ -10,6 +10,7 @@ export default function MatchTab({ userInfo, setUserInfo }) {
     nickname: userInfo?.nickname || '',
     dept: userInfo?.dept || '학과를 입력하세요',
     region: userInfo?.region || '서울',
+    gender: userInfo?.gender || '선택안함',
     alcohol: userInfo?.alcohol || '알쓰',
     intro: userInfo?.intro || '한 줄 소개를 입력해주세요.',
     tags: userInfo?.tags ? userInfo.tags.join(', ') : '#맛집탐방, #INTJ'
@@ -65,7 +66,7 @@ export default function MatchTab({ userInfo, setUserInfo }) {
           </div>
           <h3 style={{ margin: '0 0 4px', fontSize: '18px' }}>{userInfo?.nickname}</h3>
           <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '4px', color: 'var(--text-muted)', fontSize: '13px', marginBottom: '8px' }}>
-            <MapPin size={12} /> {userInfo?.region || '지역 입력안됨'} • {userInfo?.dept || '소속 입력안됨'}
+            <MapPin size={12} /> {userInfo?.region || '지역 입력안됨'} • {userInfo?.dept || '소속 입력안됨'} {userInfo?.gender && userInfo.gender !== '선택안함' && `• ${userInfo.gender}`}
           </div>
           <p style={{ fontSize: '12px', color: 'var(--text-dark)', wordBreak: 'keep-all', margin: 0 }}>
             "{userInfo?.intro || '한 줄 소개가 없습니다.'}"
@@ -248,9 +249,19 @@ export default function MatchTab({ userInfo, setUserInfo }) {
                   <label style={{ display: 'block', marginBottom: '6px', fontSize: '13px', fontWeight: 'bold' }}>한 줄 소개</label>
                   <input type="text" value={editForm.intro} onChange={(e) => setEditForm({...editForm, intro: e.target.value})} style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', border: '1px solid #e2e8f0', outline: 'none' }} />
                 </div>
-                <div>
-                  <label style={{ display: 'block', marginBottom: '6px', fontSize: '13px', fontWeight: 'bold' }}>출신 지역</label>
-                  <input type="text" value={editForm.region} onChange={(e) => setEditForm({...editForm, region: e.target.value})} placeholder="예: 서울, 부산..." style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', border: '1px solid #e2e8f0', outline: 'none' }} />
+                <div style={{ display: 'flex', gap: '12px' }}>
+                  <div style={{ flex: 1 }}>
+                    <label style={{ display: 'block', marginBottom: '6px', fontSize: '13px', fontWeight: 'bold' }}>출신 지역</label>
+                    <input type="text" value={editForm.region} onChange={(e) => setEditForm({...editForm, region: e.target.value})} placeholder="예: 서울, 부산..." style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', border: '1px solid #e2e8f0', outline: 'none' }} />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <label style={{ display: 'block', marginBottom: '6px', fontSize: '13px', fontWeight: 'bold' }}>성별</label>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      {['남자', '여자'].map(g => (
+                        <button key={g} onClick={() => setEditForm({...editForm, gender: g})} style={{ flex: 1, padding: '8px', borderRadius: '8px', border: editForm.gender === g ? '2px solid var(--yonsei-blue)' : '1px solid #e2e8f0', background: editForm.gender === g ? '#f0f6ff' : 'white', cursor: 'pointer', fontWeight: 'bold', color: editForm.gender === g ? 'var(--yonsei-blue)' : 'var(--text-muted)' }}>{g}</button>
+                      ))}
+                    </div>
+                  </div>
                 </div>
                 <div>
                   <label style={{ display: 'block', marginBottom: '6px', fontSize: '13px', fontWeight: 'bold' }}>해시태그 (쉼표로 구분)</label>
