@@ -14,6 +14,35 @@ export default function App() {
   const [activeTab, setActiveTab] = useState('match'); 
   const [showUserMenu, setShowUserMenu] = useState(false);
 
+  const [calendarEvents, setCalendarEvents] = useState([
+    { date: new Date(new Date().setDate(new Date().getDate() - 2)).toISOString().split('T')[0], expense: 15000, plan: '', memo: '스탠바이키친 너무 맛있었음!' },
+    { date: new Date().toISOString().split('T')[0], expense: 0, plan: '독수리 다방 (오후 3시)', memo: '' },
+    { date: new Date(new Date().setDate(new Date().getDate() + 1)).toISOString().split('T')[0], expense: 0, plan: '신촌 황소곱창 (저녁)', memo: '' }
+  ]);
+
+  const [chatRooms, setChatRooms] = useState([
+    { 
+      id: 1, type: '매칭방', name: '마라탕킬러', avatar: '🐯', unread: 0, time: '오후 2:30',
+      messages: [
+        { id: 1, sender: 'other', text: '안녕하세요! 마라탕 좋아하시나요?', time: '14:28' },
+        { id: 2, sender: 'me', text: '네 엄청 좋아해요!! 1주 2마라탕 합니다 ㅎㅎ', time: '14:30' }
+      ]
+    },
+    { 
+      id: 2, type: '친구방', name: '김연세', avatar: '🦅', unread: 0, time: '어제',
+      messages: [
+        { id: 1, sender: 'other', text: '내일 학식 고?', time: '어제' }
+      ]
+    },
+    { 
+      id: 3, type: '매칭방', name: '백양로산책러', avatar: '🐱', unread: 0, time: '어제',
+      messages: [
+        { id: 1, sender: 'other', text: '점심 드시고 같이 걸으실래요?', time: '어제' },
+        { id: 2, sender: 'me', text: '네 좋아요! 백양로 앞에서 봬요.', time: '어제' }
+      ]
+    }
+  ]);
+
   const handleLogin = (info) => {
     setUserInfo(info);
     setIsLoggedIn(true);
@@ -50,7 +79,7 @@ export default function App() {
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '40px' }}>
             <span style={{ fontWeight: '800', fontSize: '20px', color: 'var(--yonsei-blue)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span style={{ fontSize: '24px' }}>🦉</span> 연세 밥약
+              <span style={{ fontSize: '24px' }}>🦅</span> 연세 밥약
             </span>
             <div style={{ display: 'flex', gap: '8px' }}>
               {tabs.map(tab => (
@@ -116,10 +145,10 @@ export default function App() {
           transition={{ duration: 0.3 }}
           style={{ flex: 1, padding: '30px', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}
         >
-          {activeTab === 'map' && <MapTab />}
-          {activeTab === 'calendar' && <CalendarTab />}
-          {activeTab === 'match' && <MatchTab userInfo={userInfo} setUserInfo={setUserInfo} />}
-          {activeTab === 'messenger' && <MessengerTab userInfo={userInfo} />}
+          {activeTab === 'map' && <MapTab calendarEvents={calendarEvents} setCalendarEvents={setCalendarEvents} />}
+          {activeTab === 'calendar' && <CalendarTab calendarEvents={calendarEvents} setCalendarEvents={setCalendarEvents} />}
+          {activeTab === 'match' && <MatchTab userInfo={userInfo} setUserInfo={setUserInfo} chatRooms={chatRooms} setChatRooms={setChatRooms} />}
+          {activeTab === 'messenger' && <MessengerTab userInfo={userInfo} chatRooms={chatRooms} setChatRooms={setChatRooms} />}
         </motion.main>
       </div>
     </div>

@@ -33,7 +33,7 @@ export default function AuthTab() {
   if (isLoggedIn) {
     return (
       <div style={{ padding: '30px', maxWidth: '400px', margin: '40px auto', background: 'white', borderRadius: '30px', boxShadow: '0 8px 30px rgba(0,0,0,0.04)', textAlign: 'center', animation: 'fadeIn 0.4s ease' }}>
-        <div style={{ fontSize: '50px', marginBottom: '15px' }}>🦉</div>
+        <div style={{ fontSize: '50px', marginBottom: '15px' }}>🦅</div>
         <h3 style={{ margin: '0 0 10px 0', color: '#333', fontSize: '20px' }}>
           {nickname || email.split('@')[0]}님, 환영합니다!
         </h3>

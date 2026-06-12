@@ -2,9 +2,10 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Filter, Search, MapPin, Heart, Coffee, Beer, UserCheck, ThermometerSun, AlertCircle, X, Edit2 } from 'lucide-react';
 
-export default function MatchTab({ userInfo, setUserInfo }) {
+export default function MatchTab({ userInfo, setUserInfo, chatRooms, setChatRooms }) {
   const [activeFilters, setActiveFilters] = useState([]);
   const [isEditing, setIsEditing] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   
   const [editForm, setEditForm] = useState({
     nickname: userInfo?.nickname || '',
@@ -39,6 +40,14 @@ export default function MatchTab({ userInfo, setUserInfo }) {
   };
 
   const filteredUsers = mockUsers.filter(user => {
+    // Search query filter
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      if (!user.nickname.toLowerCase().includes(query) && !user.tags.some(tag => tag.toLowerCase().includes(query))) {
+        return false;
+      }
+    }
+    
     if (activeFilters.length === 0) return true;
     
     // Check if user matches ALL active filters
@@ -117,7 +126,7 @@ export default function MatchTab({ userInfo, setUserInfo }) {
           </h2>
           <div style={{ position: 'relative' }}>
             <Search size={16} color="var(--text-muted)" style={{ position: 'absolute', top: '10px', left: '12px' }} />
-            <input type="text" placeholder="닉네임, 키워드 검색" style={{ padding: '8px 16px 8px 36px', borderRadius: '100px', border: '1px solid #e2e8f0', outline: 'none', fontSize: '13px' }} />
+            <input type="text" placeholder="닉네임, 키워드 검색" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} style={{ padding: '8px 16px 8px 36px', borderRadius: '100px', border: '1px solid #e2e8f0', outline: 'none', fontSize: '13px' }} />
           </div>
         </div>
 
@@ -209,9 +218,28 @@ export default function MatchTab({ userInfo, setUserInfo }) {
                 </div>
 
                 <div style={{ marginTop: 'auto', paddingTop: '16px' }}>
-                  <button className="btn-primary" style={{ width: '100%', padding: '12px', fontSize: '14px' }}>
-                    밥약 신청하기
-                  </button>
+                  {chatRooms && chatRooms.some(room => room.name === user.nickname) ? (
+                    <button className="btn-secondary" style={{ width: '100%', padding: '12px', fontSize: '14px', background: '#e2e8f0', color: 'var(--text-dark)', cursor: 'default', border: 'none' }} disabled>
+                      밥약 신청됨
+                    </button>
+                  ) : (
+                    <button className="btn-primary" style={{ width: '100%', padding: '12px', fontSize: '14px' }} onClick={() => {
+                      alert(`${user.nickname}님에게 밥약을 신청했습니다! 메신저에서 확인해 보세요.`);
+                      if (setChatRooms) {
+                        setChatRooms(prev => [
+                          {
+                            id: Date.now(), type: '매칭방', name: user.nickname, avatar: user.avatar, unread: 1, time: '방금',
+                            messages: [
+                              { id: 1, sender: 'system', text: `[${user.nickname}]님과 밥약이 성사되었습니다. 인사를 건네보세요!`, time: '방금' }
+                            ]
+                          },
+                          ...prev
+                        ]);
+                      }
+                    }}>
+                      밥약 신청하기
+                    </button>
+                  )}
                 </div>
               </motion.div>
             ))}

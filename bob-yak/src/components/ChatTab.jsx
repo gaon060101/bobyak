@@ -8,7 +8,7 @@ export default function ChatTab() {
   const addIcebreaker = (animal) => {
     const questions = {
       '양': '양 님이 질문을 뽑았습니다: 가장 좋아하는 동물은 무엇인가요?',
-      '부엉이': '부엉이 님이 질문을 뽑았습니다: 밤샘 코딩 vs 아침 일찍 코딩?'
+      '독수리': '독수리 님이 질문을 뽑았습니다: 밤샘 코딩 vs 아침 일찍 코딩?'
     };
     
     setMessages([...messages, { 
@@ -54,9 +54,9 @@ export default function ChatTab() {
           <button 
             className="circle-btn" 
             style={{ width: '60px', height: '60px', background: 'white', fontSize: '28px', border: '1px solid #ddd' }}
-            onClick={() => addIcebreaker('부엉이')}
+            onClick={() => addIcebreaker('독수리')}
           >
-            🦉
+            🦅
           </button>
         </div>
       </div>

@@ -2,37 +2,13 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, UserPlus, Dices, Send, MapPin, Store, Info, ChevronLeft, MessageSquare, AlertCircle } from 'lucide-react';
 
-export default function MessengerTab({ userInfo }) {
+export default function MessengerTab({ userInfo, chatRooms, setChatRooms }) {
   const [activeChat, setActiveChat] = useState(null);
   const [messageInput, setMessageInput] = useState('');
 
   const [showRestaurantModal, setShowRestaurantModal] = useState(false);
   const [showRatingModal, setShowRatingModal] = useState(false);
   const messagesEndRef = useRef(null);
-
-  // 채팅방 목업 데이터 (대화 내역 포함)
-  const [chatRooms, setChatRooms] = useState([
-    { 
-      id: 1, type: '매칭방', name: '마라탕킬러', avatar: '🐯', unread: 0, time: '오후 2:30',
-      messages: [
-        { id: 1, sender: 'other', text: '안녕하세요! 마라탕 좋아하시나요?', time: '14:28' },
-        { id: 2, sender: 'me', text: '네 엄청 좋아해요!! 1주 2마라탕 합니다 ㅎㅎ', time: '14:30' }
-      ]
-    },
-    { 
-      id: 2, type: '친구방', name: '김연세', avatar: '🦅', unread: 0, time: '어제',
-      messages: [
-        { id: 1, sender: 'other', text: '내일 학식 고?', time: '어제' }
-      ]
-    },
-    { 
-      id: 3, type: '매칭방', name: '백양로산책러', avatar: '🐱', unread: 0, time: '어제',
-      messages: [
-        { id: 1, sender: 'other', text: '점심 드시고 같이 걸으실래요?', time: '어제' },
-        { id: 2, sender: 'me', text: '네 좋아요! 백양로 앞에서 봬요.', time: '어제' }
-      ]
-    }
-  ]);
 
   // 식당 목업 데이터
   const restaurants = [

@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MapPin, Star, Calendar, Clock, ChevronRight, MessageSquare } from 'lucide-react';
+import { MapPin, Star, Calendar, Clock, ChevronRight, MessageSquare, X } from 'lucide-react';
 
-export default function MapTab() {
+export default function MapTab({ calendarEvents, setCalendarEvents }) {
   const [selectedPlace, setSelectedPlace] = useState(null);
   const [categoryFilter, setCategoryFilter] = useState('전체');
   const [myReviewText, setMyReviewText] = useState('');
@@ -33,7 +33,8 @@ export default function MapTab() {
         week: ['일','월','화','수','목','금','토'][d.getDay()],
         isAvailable: Math.random() > 0.3,
         isToday: i === 0,
-        fullDate: `${d.getMonth() + 1}월 ${d.getDate()}일`
+        fullDate: `${d.getMonth() + 1}월 ${d.getDate()}일`,
+        fullDateStr: d.toISOString().split('T')[0]
       });
     }
     return dates;
@@ -162,8 +163,13 @@ export default function MapTab() {
                     <h3 style={{ margin: '0 0 8px', fontSize: '20px', color: 'var(--yonsei-blue)' }}>{selectedPlace.name}</h3>
                     <div style={{ fontSize: '13px', color: 'var(--text-muted)' }}>{selectedPlace.type} • {selectedPlace.distance}</div>
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '16px', fontWeight: 'bold', color: 'var(--manner-orange)' }}>
-                    <Star fill="currentColor" /> {selectedPlace.rating}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '16px', fontWeight: 'bold', color: 'var(--manner-orange)' }}>
+                      <Star fill="currentColor" /> {selectedPlace.rating}
+                    </div>
+                    <button onClick={() => setSelectedPlace(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex' }}>
+                      <X size={20} color="var(--text-muted)" />
+                    </button>
                   </div>
                 </div>
 
@@ -255,7 +261,21 @@ export default function MapTab() {
                     style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
                     onClick={() => {
                       if(!selectedPlace) alert('식당을 먼저 선택해주세요.');
-                      else alert(`${selectedDate.day}일 ${selectedDate.week}요일에 '${selectedPlace.name}' 예약이 신청되었습니다!`);
+                      else {
+                        alert(`${selectedDate.day}일 ${selectedDate.week}요일에 '${selectedPlace.name}' 예약이 신청되었습니다!`);
+                        if (setCalendarEvents) {
+                           setCalendarEvents(prev => {
+                              const existingIndex = prev.findIndex(e => e.date === selectedDate.fullDateStr);
+                              if (existingIndex >= 0) {
+                                const newEvents = [...prev];
+                                newEvents[existingIndex] = { ...newEvents[existingIndex], plan: `${selectedPlace.name} (예약됨)` };
+                                return newEvents;
+                              }
+                              return [...prev, { date: selectedDate.fullDateStr, expense: 0, plan: `${selectedPlace.name} (예약됨)`, memo: '' }];
+                           });
+                        }
+                        setSelectedPlace(null);
+                      }
                     }}
                   >
                     예약 신청하기 <ChevronRight size={16} />

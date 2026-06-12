@@ -31,7 +31,7 @@ export default function Login({ onLogin }) {
         style={{ padding: '40px', width: '100%', maxWidth: '420px', margin: '20px' }}
       >
         <div style={{ textAlign: 'center', marginBottom: '30px' }}>
-          <div style={{ fontSize: '48px', marginBottom: '10px' }}>🦉</div>
+          <div style={{ fontSize: '48px', marginBottom: '10px' }}>🦅</div>
           <h2 style={{ margin: 0, color: 'var(--yonsei-blue)', fontSize: '28px', fontWeight: '700' }}>연세 밥약</h2>
           <p style={{ margin: '10px 0 0', color: 'var(--text-muted)', fontSize: '15px' }}>
             {isLoginMode ? '서비스 이용을 위해 로그인해주세요.' : '환영합니다! 정보를 입력해주세요.'}
