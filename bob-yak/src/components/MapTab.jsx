@@ -42,6 +42,8 @@ export default function MapTab({ calendarEvents, setCalendarEvents }) {
   
   const [dates] = useState(generateDates());
   const [selectedDate, setSelectedDate] = useState(dates[0]);
+  const [selectedTime, setSelectedTime] = useState('12:00');
+  const timeSlots = ['11:00', '11:30', '12:00', '12:30', '13:00', '17:00', '18:00', '19:00'];
 
   return (
     <div style={{ display: 'flex', height: '100%', gap: '24px', flex: 1, minHeight: 0, width: '100%' }}>
@@ -194,6 +196,25 @@ export default function MapTab({ calendarEvents, setCalendarEvents }) {
                       </button>
                     ))}
                   </div>
+
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '4px', marginBottom: '8px' }}>
+                    <h4 style={{ margin: 0, fontSize: '14px' }}>예약 시간 선택</h4>
+                  </div>
+                  <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '8px' }}>
+                    {timeSlots.map(time => (
+                      <button 
+                        key={time}
+                        onClick={() => setSelectedTime(time)}
+                        style={{ 
+                          flexShrink: 0, padding: '8px 16px', borderRadius: '12px', border: '1px solid #e2e8f0', cursor: 'pointer', transition: 'all 0.2s', fontSize: '14px', fontWeight: 'bold',
+                          background: selectedTime === time ? 'var(--yonsei-blue)' : 'white',
+                          color: selectedTime === time ? 'white' : 'var(--text-dark)'
+                        }}
+                      >
+                        {time}
+                      </button>
+                    ))}
+                  </div>
                 </div>
 
                 <div style={{ background: '#f8fafc', borderRadius: '16px', padding: '16px', display: 'flex', flexDirection: 'column', gap: '12px', maxHeight: showAllReviews ? '250px' : 'auto', overflowY: showAllReviews ? 'auto' : 'visible' }}>
@@ -262,16 +283,17 @@ export default function MapTab({ calendarEvents, setCalendarEvents }) {
                     onClick={() => {
                       if(!selectedPlace) alert('식당을 먼저 선택해주세요.');
                       else {
-                        alert(`${selectedDate.day}일 ${selectedDate.week}요일에 '${selectedPlace.name}' 예약이 신청되었습니다!`);
+                        alert(`${selectedDate.day}일 ${selectedDate.week}요일 ${selectedTime}에 '${selectedPlace.name}' 예약이 신청되었습니다!`);
                         if (setCalendarEvents) {
                            setCalendarEvents(prev => {
                               const existingIndex = prev.findIndex(e => e.date === selectedDate.fullDateStr);
+                              const planText = `[${selectedTime}] ${selectedPlace.name} (예약됨)`;
                               if (existingIndex >= 0) {
                                 const newEvents = [...prev];
-                                newEvents[existingIndex] = { ...newEvents[existingIndex], plan: `${selectedPlace.name} (예약됨)` };
+                                newEvents[existingIndex] = { ...newEvents[existingIndex], plan: planText };
                                 return newEvents;
                               }
-                              return [...prev, { date: selectedDate.fullDateStr, expense: 0, plan: `${selectedPlace.name} (예약됨)`, memo: '' }];
+                              return [...prev, { date: selectedDate.fullDateStr, expense: 0, plan: planText, memo: '' }];
                            });
                         }
                         setSelectedPlace(null);
